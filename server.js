@@ -5,7 +5,7 @@
  * Retorna todos os preços em cache (atualiza a cada 30s automaticamente)
  * 
  * Deploy: Node.js + Express
- * Porta: 10000 (ou variável PORT)
+ * Porta: 3001 (ou variável PORT)
  */
 
 const express = require('express');
@@ -49,7 +49,7 @@ const COINGECKO_IDS = {
 async function fetchCoinGeckoPrices() {
   try {
     const ids = Object.values(COINGECKO_IDS).join(',');
-
+    
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,
       {
@@ -64,7 +64,7 @@ async function fetchCoinGeckoPrices() {
     }
 
     const data = await response.json();
-
+    
     const prices = {};
     for (const [symbol, id] of Object.entries(COINGECKO_IDS)) {
       if (data[id] && data[id].usd > 0) {
@@ -79,7 +79,7 @@ async function fetchCoinGeckoPrices() {
 
     console.log(`✅ CoinGecko: ${Object.keys(prices).length} tokens`);
     return prices;
-
+    
   } catch (error) {
     console.error('❌ CoinGecko error:', error.message);
     return {};
@@ -110,9 +110,9 @@ async function fetchOrbePrice() {
     if (data.pair && data.pair.priceUsd) {
       const price = parseFloat(data.pair.priceUsd);
       const change24h = parseFloat(data.pair.priceChange?.h24 || 0);
-
+      
       console.log(`✅ ORBE: $${price.toFixed(6)}`);
-
+      
       return {
         ORBE: {
           price,
@@ -124,7 +124,7 @@ async function fetchOrbePrice() {
     }
 
     return null;
-
+    
   } catch (error) {
     console.error('❌ DexScreener error:', error.message);
     return null;
@@ -193,10 +193,10 @@ async function updatePriceCache() {
 
 async function startAutoUpdate() {
   console.log('🚀 Iniciando auto-update de preços (30s)...');
-
+  
   // Update imediato
   await updatePriceCache();
-
+  
   // Loop a cada 30s
   setInterval(async () => {
     await updatePriceCache();
@@ -222,7 +222,7 @@ app.get('/health', (req, res) => {
 // Get all prices (cached)
 app.get('/api/prices', (req, res) => {
   const cacheAge = priceCache.lastUpdate ? Date.now() - priceCache.lastUpdate : null;
-
+  
   res.json({
     success: true,
     data: priceCache.data,
@@ -262,9 +262,9 @@ app.get('/api/prices/:token', (req, res) => {
 // Force refresh (admin only - use API key in production)
 app.post('/api/prices/refresh', async (req, res) => {
   // TODO: Add API key validation in production
-
+  
   await updatePriceCache();
-
+  
   res.json({
     success: true,
     message: 'Cache refreshed',
@@ -284,7 +284,7 @@ app.listen(PORT, async () => {
   console.log(`🌐 Health: /health`);
   console.log(`💰 Prices: /api/prices`);
   console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
-
+  
   // Start auto-update
   await startAutoUpdate();
 });
